@@ -6,11 +6,17 @@
 #include "knnring.h"
 
 
-void * qselect(double *tArray,int *index, int len, int k) {
+typedef struct distIdx{
+  double distance;
+  int index;
+} distIdx;
+
+distIdx qselect(double *tArray,int *index, int len, int k) {
 	#	define SWAP(a, b) { tmp = tArray[a]; tArray[a] = tArray[b]; tArray[b] = tmp; }
   #	define SWAPINDEX(a, b) { tmp = index[a]; index[a] = index[b]; index[b] = tmp; }
 	int i, st;
 	double tmp;
+  distIdx p;
 	// double * tArray = (double * ) malloc(len * sizeof(double));
 	// for(int i=0; i<len; i++){
 	// 	tArray[i] = v[i];
@@ -29,17 +35,21 @@ void * qselect(double *tArray,int *index, int len, int k) {
   else if(k > st){
     qselect(tArray + st, index + st, len - st, k - st);
   }
-  return NULL;
+  p.distance = tArray[k];
+  p.index = index[k];
+  return p;
 	//return k == st	? tArray[st] : st > k	? qselect(tArray, st, k) : qselect(tArray + st, len - st, k - st);
 }
 
-knnresult kNN(double * X , double * Y , int n , int m, int d , int k){
+knnresult kNN(double * X , double * Y , int n , int m , int d , int k){
 
   knnresult result;
   result.k = k;
   result.m = m;
   result.nidx = NULL;
   result.ndist = NULL;
+
+  distIdx p;
 
   //X: n * d
   //Y: m * d
@@ -103,22 +113,28 @@ knnresult kNN(double * X , double * Y , int n , int m, int d , int k){
   for(int i=0; i<m; i++){
     for(int j=0; j<n; j++){
       *(temp+j) = *(distance+i*n+j);
-      *(tempIdx+j)=*(indeces+i*n+j);
+      *(tempIdx+j)= *(indeces+i*n+j);
     }
 
-
-    // for(int j=0; j<k; j++){
-    //   *(final+i*k+j) = qselect(temp, n, j);
-    // }
-    qselect(temp,tempIdx, n, k);
     for(int j=0; j<k; j++){
-      *(final+i*k+j) = temp[j];
-      *(finalIdx+i*k+j) = tempIdx[j];
+      p = qselect(temp,tempIdx,n,j);
+      *(final+i*k+j) = p.distance;
+      *(finalIdx+i*k+j) = p.index;
     }
   }
 
-  result.ndist = final;
-  result.nidx = finalIdx;
+
+  double * transD1 = (double *) malloc(m*k*sizeof(double));
+  int * transD2 = (int *) malloc(m*k*sizeof(int));
+  for(int i=0; i<m; i++){
+    for(int j=0; j<k; j++){
+      *(transD1 + j*m + i ) = *(final + i*k + j );
+      *(transD2 + j*m + i ) = *(finalIdx + i*k + j );
+    }
+  }
+
+  result.ndist = transD1;
+  result.nidx = transD2;
 
   return result;
 }

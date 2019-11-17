@@ -32,4 +32,4 @@ $(SDIR)/knnring_sequential.o:	$(SDIR)/knnring_sequential.c
 
 
 clean:
-	rm -f $(SDIR)/*.o $(EXE)
+	rm -f $(SDIR)/*.o $(EXE) $(LIBS) 

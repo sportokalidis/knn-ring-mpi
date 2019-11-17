@@ -7,7 +7,7 @@
 
 int main (int argc , char *argv[]) {
 
-  int n=3,m=2,k=2,d=2,i,j;
+  int n=10,m=5,k=3,d=2,i,j;
   int counter=0;
   knnresult ofi;
 
