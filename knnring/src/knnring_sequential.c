@@ -6,7 +6,7 @@
 #include "knnring.h"
 
 
-typedef struct distIdx{
+typedef struct distIdx {
   double distance;
   int index;
 } distIdx;
@@ -16,7 +16,7 @@ distIdx qselect(double *tArray,int *index, int len, int k) {
   #	define SWAPINDEX(a, b) { tmp = index[a]; index[a] = index[b]; index[b] = tmp; }
 	int i, st;
 	double tmp;
-  distIdx p;
+  distIdx c;
 	// double * tArray = (double * ) malloc(len * sizeof(double));
 	// for(int i=0; i<len; i++){
 	// 	tArray[i] = v[i];
@@ -30,18 +30,21 @@ distIdx qselect(double *tArray,int *index, int len, int k) {
 	SWAP(len-1, st);
   SWAPINDEX(len-1,st);
   if(k < st){
-    qselect(tArray, index,st, k);
+    c = qselect(tArray, index,st, k);
   }
   else if(k > st){
-    qselect(tArray + st, index + st, len - st, k - st);
+    c = qselect(tArray + st, index + st, len - st, k - st);
   }
-  p.distance = tArray[k];
-  p.index = index[k];
-  return p;
+  if (k == st){
+    c.distance = tArray[st];
+    c.index = index[st];
+    return c;
+  }
+  return c;
 	//return k == st	? tArray[st] : st > k	? qselect(tArray, st, k) : qselect(tArray + st, len - st, k - st);
 }
 
-knnresult kNN(double * X , double * Y , int n , int m , int d , int k){
+knnresult kNN(double * X , double * Y , int n , int m , int d , int k) {
 
   knnresult result;
   result.k = k;
@@ -64,11 +67,13 @@ knnresult kNN(double * X , double * Y , int n , int m , int d , int k){
   indeces= (int*)malloc(m * n  *sizeof(int));
 
   for(int i=0; i<m; i++){
-    for(int j=0; j<n; j++)
-    *(indeces+i*n+j)=j;
+    for(int j=0; j<n; j++) {
+      *(indeces+i*n+j)=j;
+    }
   }
 
   cblas_dgemm(CblasRowMajor , CblasNoTrans , CblasTrans , n, m , d , alpha , X , lda , Y , ldb , beta, distance , ldc);
+
 
   double * xRow = (double *) calloc(n,sizeof(double));
   double * yRow = (double *) calloc(m,sizeof(double));
@@ -94,18 +99,18 @@ knnresult kNN(double * X , double * Y , int n , int m , int d , int k){
   //free(yRow);
 
   // calculate transpose matrix
-  double * transD = (double *) malloc(m*d*sizeof(double));
+  double * transD = (double *) malloc(m*n*sizeof(double));
   for(int i=0; i<n; i++){
     for(int j=0; j<m; j++){
       *(transD + j*n + i ) = *(distance + i*m + j );
     }
   }
+
   // distance = transD then delete transD
   for(int i=0; i<n*m; i++) {
     *(distance+i) = *(transD+i);
   }
   //free(transD);
-
   double * final = (double *) malloc(m*k * sizeof(double));
   int * finalIdx = (int *) malloc (m * k * sizeof(int));
   double * temp = (double *) malloc(n * sizeof(double));
@@ -115,7 +120,6 @@ knnresult kNN(double * X , double * Y , int n , int m , int d , int k){
       *(temp+j) = *(distance+i*n+j);
       *(tempIdx+j)= *(indeces+i*n+j);
     }
-
     for(int j=0; j<k; j++){
       p = qselect(temp,tempIdx,n,j);
       *(final+i*k+j) = p.distance;
@@ -123,48 +127,22 @@ knnresult kNN(double * X , double * Y , int n , int m , int d , int k){
     }
   }
 
+  //
+  // double * transD1 = (double *) malloc(m*k*sizeof(double));
+  // int * transD2 = (int *) malloc(m*k*sizeof(int));
+  // for(int i=0; i<m; i++){
+  //   for(int j=0; j<k; j++){
+  //     *(transD1 + j*m + i ) = *(final + i*k + j );
+  //     *(transD2 + j*m + i ) = *(finalIdx + i*k + j );
+  //   }
+  // }
 
-  double * transD1 = (double *) malloc(m*k*sizeof(double));
-  int * transD2 = (int *) malloc(m*k*sizeof(int));
-  for(int i=0; i<m; i++){
-    for(int j=0; j<k; j++){
-      *(transD1 + j*m + i ) = *(final + i*k + j );
-      *(transD2 + j*m + i ) = *(finalIdx + i*k + j );
-    }
-  }
-
-  result.ndist = transD1;
-  result.nidx = transD2;
+  result.ndist = final;
+  result.nidx = finalIdx;
 
   return result;
 }
 
-
-// double *distance(double * X, double * Y, int n, int m, int d) {
-//
-//   double *result = (double *)malloc(n*m*sizeof(double));
-//
-//   for(int i=0; i<m; i++) {
-//     for(int j=0; j<n; j++) {
-//       for(int k=0; k<d; k++) {
-//         *(result + j*m + i) += (*(X + j*d + k) - *(Y + i*d + k)) * (*(X + j*d + k) - *(Y + i*d + k));
-//       }
-//     }
-//   }
-//   return result;
-// }
-
-double * generatePoints(int n, int d){
-
-  srand(time(NULL));
-  double * res = (double *) malloc(n * d * sizeof(double));
-
-  for(int i=0; i<n; i++){
-    for(int j=0; j<d; j++)
-      *(res+i*d+j) = (double)rand()/ RAND_MAX;
-  }
-  return res;
-}
 
 // int main (int argc , char *argv[]) {
 //
