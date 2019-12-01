@@ -13,6 +13,7 @@
 #include <assert.h>
 #include <mpi.h>
 
+
 #include "tester_helper.h"
 
 
@@ -122,25 +123,21 @@ int testMPI( int    const n,
 
     }
 
-
-    printf ("\n Matrix DISTANCE: \n");
-    for (int i=0; i<n*p; i++) {
-      for (int j=0; j<k; j++) {
-        printf ("%lf    ", *(knnresall.ndist+i*k+j));
-      }
-      printf ("\n");
-    }
-
-    printf ("\n Matrix INDECES: \n");
-    for (int i=0; i<n*p; i++) {
-      for (int j=0; j<k; j++) {
-        printf ("%10.2d", *(knnresall.nidx+i*k+j));
-      }
-      printf ("\n");
-    }
-
-
-
+    // printf ("\n Matrix DISTANCE: \n");
+    // for (int i=0; i<n*p; i++) {
+    //   for (int j=0; j<k; j++) {
+    //     printf ("%lf    ", *(knnresall.ndist+i*k+j));
+    //   }
+    //   printf ("\n");
+    // }
+    //
+    // printf ("\n Matrix INDECES: \n");
+    // for (int i=0; i<n*p; i++) {
+    //   for (int j=0; j<k; j++) {
+    //     printf ("%10.2d", *(knnresall.nidx+i*k+j));
+    //   }
+    //   printf ("\n");
+    // }
 
     // ---------- Validate results
     isValid = validateResult( knnresall, corpusAll, corpusAll,
@@ -185,8 +182,8 @@ int main(int argc, char *argv[])
   MPI_Init(&argc, &argv);       // initialize MPI
 
   int id;                       // PID
-  int n=1500;                   // # corpus elements per process
-  int d=50;                     // # dimensions
+  int n=500;                   // # corpus elements per process
+  int d=100;                     // # dimensions
   int k=50;                     // # neighbors
 
   MPI_Comm_rank(MPI_COMM_WORLD, &id); // Task ID

@@ -2,8 +2,8 @@
 * file:   knnring_sequential.c
 * Iplemantation of knnring sequential version
 *
-* authors: Charalabos Papadakis, Portokalidis Stavros (9334)
-* emails: , stavport@ece.auth.gr
+* authors: Charalampos Papadakis (9128) , Portokalidis Stavros (9334)
+* emails: papadakic@ece.auth.gr , stavport@ece.auth.gr
 * date:   2019-12-01
 */
 
@@ -19,7 +19,7 @@
 
 knnresult kNN(double * X , double * Y , int n , int m , int d , int k) {
 
-  knnresult result;
+  knnresult result; //the final result that will be returned
   result.k = k;
   result.m = m;
   result.nidx = NULL;
@@ -27,10 +27,13 @@ knnresult kNN(double * X , double * Y , int n , int m , int d , int k) {
 
   //X: n * d
   //Y: m * d
-  double * distance;
-  int *indeces;
+  double * distance; //array of all computed distances
+  int *indeces;  //array of indeces used for specific distance
+
+  //parametres used for CBlas_dgemm function
   double alpha=-2.0, beta=0.0;
   int lda=d, ldb=d, ldc=m, i, j;
+
   int counter = 0;
 
   distance = (double *) calloc(n*m,sizeof(double));
@@ -43,22 +46,9 @@ knnresult kNN(double * X , double * Y , int n , int m , int d , int k) {
     }
   }
 
+  //multiplication of arrays X and trans Y
   cblas_dgemm(CblasRowMajor , CblasNoTrans , CblasTrans , n, m , d , alpha , X , lda , Y , ldb , beta, distance , ldc);
 
-
-  // double * xRow = (double *) calloc(n,sizeof(double));
-  // double * yRow = (double *) calloc(m,sizeof(double));
-  //
-  // for(int i=0; i<n; i++){
-  //   for(int j=0; j<d; j++){
-  //     xRow[i] += (*(X+i*d+j)) * (*(X+i*d+j));
-  //   }
-  // }
-  // for(int i=0; i<m; i++){
-  //   for(int j=0; j<d; j++){
-  //     yRow[i] += (*(Y+i*d+j)) * (*(Y+i*d+j));
-  //   }
-  // }
 
   for(int i=0; i<n; i++){
     double SumX =  SumRow(X, d, i);
@@ -74,9 +64,6 @@ knnresult kNN(double * X , double * Y , int n , int m , int d , int k) {
       }
     }
   }
-  // free(xRow);
-  // free(yRow);
-
 
   // calculate transpose matrix
   double * transD = (double *) malloc(m*n*sizeof(double));
@@ -91,6 +78,7 @@ knnresult kNN(double * X , double * Y , int n , int m , int d , int k) {
     *(distance+i) = *(transD+i);
   }
   free(transD);
+
   double * final = (double *) malloc(m*k * sizeof(double));
   int * finalIdx = (int *) malloc (m * k * sizeof(int));
   double * temp = (double *) malloc(n * sizeof(double));
@@ -100,14 +88,18 @@ knnresult kNN(double * X , double * Y , int n , int m , int d , int k) {
       *(temp+j) = *(distance+i*n+j);
       *(tempIdx+j)= *(indeces+i*n+j);
     }
-    qselect(temp,tempIdx,n,k);
-    quicksort(temp, tempIdx,0,k);
+    qselect(temp,tempIdx,n,k); //qselect in every line of the distances array
+    quicksort(temp, tempIdx,0,k); 
     for(int j=0; j<k; j++){
       *(final+i*k+j) = temp[j];
       *(finalIdx+i*k+j) = tempIdx[j];
     }
   }
 
+  free(temp);
+  free(tempIdx);
+  free(distance);
+  free(indeces);
 
 
   result.ndist = final;

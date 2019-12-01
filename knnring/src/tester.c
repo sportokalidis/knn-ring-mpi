@@ -222,10 +222,10 @@ int validateResultRowMajor( knnresult knnres,
 int main()
 {
 
-  int n=1000;                    // corpus
-  int m=900;                    // query
-  int d=10;                      // dimensions
-  int k=10;                     // # neighbors
+  int n=891;                    // corpus
+  int m=762;                    // query
+  int d=7;                      // dimensions
+  int k=13;                     // # neighbors
   int i,j;
 
   double  * corpus = (double * ) malloc( n*d * sizeof(double) );

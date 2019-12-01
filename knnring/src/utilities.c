@@ -1,9 +1,9 @@
-/*
+	/*
 * file:   utilities.c
-* Implementation of project's functions 
+* Implementation of project's functions
 *
-* authors: Charalabos Papadakis, Portokalidis Stavros (9334)
-* emails: , stavport@ece.auth.gr
+* authors: Charalampos Papadakis (9128), Portokalidis Stavros (9334)
+* emails: papadakic@ece.auth.gr , stavport@ece.auth.gr
 * date:   2019-12-01
 */
 
@@ -14,10 +14,10 @@
 #include <math.h>
 
 
-void swapElement(double **one, double  **two){
-	double  *temp = *one;
-	*one = *two;
-	*two = temp;
+void swapElement(double **first, double  **second){
+	double  *temp = *first;
+	*first = *second;
+	*second = temp;
 }
 
 double SumRow(double *array, int numOfColumns, int row) {
@@ -99,33 +99,29 @@ void quicksort(double *array, int *idx, int first, int last){
 }
 
 
-knnresult updateResult(knnresult result,knnresult tempResult,int offset,int newOff){
+knnresult changeResult(knnresult result,knnresult tempResult,int offset,int newOff){
   double *y = (double *)malloc(result.m*result.k*sizeof(double));
   int *yidx = (int *)malloc(result.m*result.k*sizeof(int));
 
-  if(y==NULL){
-    printf("Y EXEI THEMA");
+	if(y==NULL || yidx==NULL){
+		exit(1);
+	}
 
-  }
-  if(yidx==NULL){
-    printf("YIDX EXEI THEMA");
-
-  }
-  int p1 , p2 , p3;
+  int myCounter , newCounter , allCounter;
   for(int i=0; i<result.m; i++){
-    p1=0, p2=0, p3=0;
-    while (p3<result.k) {
-        if (*(result.ndist + i*result.k + p1) < *(tempResult.ndist + i*result.k+ p2)){
-          *(y+i*result.k+p3) = *(result.ndist+ i*result.k+p1);
-          *(yidx+i*result.k+p3) = *(result.nidx+i*result.k+p1) + offset*result.m;
-          p3++;
-          p1++;
+    myCounter=0, newCounter=0, allCounter=0;
+    while (allCounter<result.k) {
+        if (*(result.ndist + i*result.k + myCounter) < *(tempResult.ndist + i*result.k+ newCounter)){
+          *(y+i*result.k+allCounter) = *(result.ndist+ i*result.k+myCounter);
+          *(yidx+i*result.k+allCounter) = *(result.nidx+i*result.k+myCounter) + offset*result.m;
+          allCounter++;
+          myCounter++;
         }
         else{
-          *(y+i*result.k+p3) = *(tempResult.ndist+i*result.k+p2);
-          *(yidx+i*result.k+p3) = *(tempResult.nidx+i*result.k+p2) + newOff*result.m  ;
-          p3++;
-          p2++;
+          *(y+i*result.k+allCounter) = *(tempResult.ndist+i*result.k+newCounter);
+          *(yidx+i*result.k+allCounter) = *(tempResult.nidx+i*result.k+newCounter) + newOff*result.m  ;
+          allCounter++;
+          newCounter++;
         }
     }
   }
