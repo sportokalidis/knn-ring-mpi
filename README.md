@@ -28,7 +28,7 @@ In order to run the project, you need to download and install OpenBlas library. 
 
 ---
 #### Authors
-**Charalabos Paradakis** <br/> 
+**Papadakis Charalabos** <br/> 
 **Portokalidis Stavros** <br/>
 
 ---
