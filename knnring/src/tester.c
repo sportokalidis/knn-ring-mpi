@@ -223,9 +223,9 @@ int main()
 {
 
   int n=1000;                    // corpus
-  int m=762;                    // query
-  int d=7;                      // dimensions
-  int k=13;                     // # neighbors
+  int m=900;                    // query
+  int d=10;                      // dimensions
+  int k=10;                     // # neighbors
   int i,j;
 
   double  * corpus = (double * ) malloc( n*d * sizeof(double) );
@@ -239,38 +239,38 @@ int main()
 
   knnresult knnres = kNN( corpus, query, n,m,d,k);
 
-  printf ("\n Matrix Corpus: \n");
-for (i=0; i<n; i++) {
-  for (j=0; j<d; j++) {
-    printf ("%10.2lf", *(corpus+j+i*d));
-  }
-  printf ("\n");
-}
-
-printf ("\n Matrix Query: \n");
-for (i=0; i<m; i++) {
-  for (j=0; j<d; j++) {
-    printf ("%10.2lf", *(query+i*d+j));
-  }
-  printf ("\n");
-}
+//   printf ("\n Matrix Corpus: \n");
+// for (i=0; i<n; i++) {
+//   for (j=0; j<d; j++) {
+//     printf ("%10.2lf", *(corpus+j+i*d));
+//   }
+//   printf ("\n");
+// }
 //
-// printf("\n\n");
-printf ("\n Matrix DISTANCE: \n");
-for (i=0; i<m; i++) {
-  for (j=0; j<k; j++) {
-    printf ("%lf    ", *(knnres.ndist+i*k+j));
-  }
-  printf ("\n");
-}
-
-printf ("\n Matrix INDECES: \n");
-for (i=0; i<m; i++) {
-  for (j=0; j<k; j++) {
-    printf ("%10.2d", *(knnres.nidx+i*k+j));
-  }
-  printf ("\n");
-}
+// printf ("\n Matrix Query: \n");
+// for (i=0; i<m; i++) {
+//   for (j=0; j<d; j++) {
+//     printf ("%10.2lf", *(query+i*d+j));
+//   }
+//   printf ("\n");
+// }
+// //
+// // printf("\n\n");
+// printf ("\n Matrix DISTANCE: \n");
+// for (i=0; i<m; i++) {
+//   for (j=0; j<k; j++) {
+//     printf ("%lf    ", *(knnres.ndist+i*k+j));
+//   }
+//   printf ("\n");
+// }
+//
+// printf ("\n Matrix INDECES: \n");
+// for (i=0; i<m; i++) {
+//   for (j=0; j<k; j++) {
+//     printf ("%10.2d", *(knnres.nidx+i*k+j));
+//   }
+//   printf ("\n");
+// }
 
   int isValid = validateResultRowMajor( knnres, corpus, query, n, m, d, k );
 

@@ -1,48 +1,21 @@
+/*
+* file:   knnring_sequential.c
+* Iplemantation of knnring sequential version
+*
+* authors: Charalabos Papadakis, Portokalidis Stavros (9334)
+* emails: , stavport@ece.auth.gr
+* date:   2019-12-01
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
 #include "cblas.h"
 #include "knnring.h"
+#include "utilities.h"
 
 
-typedef struct distIdx {
-  double distance;
-  int index;
-} distIdx;
-
-distIdx qselect(double *tArray,int *index, int len, int k) {
-	#	define SWAP(a, b) { tmp = tArray[a]; tArray[a] = tArray[b]; tArray[b] = tmp; }
-  #	define SWAPINDEX(a, b) { tmp = index[a]; index[a] = index[b]; index[b] = tmp; }
-	int i, st;
-	double tmp;
-  distIdx c;
-	// double * tArray = (double * ) malloc(len * sizeof(double));
-	// for(int i=0; i<len; i++){
-	// 	tArray[i] = v[i];
-	// }
-	for (st = i = 0; i < len - 1; i++) {
-		if (tArray[i] > tArray[len-1]) continue;
-		SWAP(i, st);
-    SWAPINDEX(i,st);
-		st++;
-	}
-	SWAP(len-1, st);
-  SWAPINDEX(len-1,st);
-  if(k < st){
-    c = qselect(tArray, index,st, k);
-  }
-  else if(k > st){
-    c = qselect(tArray + st, index + st, len - st, k - st);
-  }
-  if (k == st){
-    c.distance = tArray[st];
-    c.index = index[st];
-    return c;
-  }
-  return c;
-	//return k == st	? tArray[st] : st > k	? qselect(tArray, st, k) : qselect(tArray + st, len - st, k - st);
-}
 
 knnresult kNN(double * X , double * Y , int n , int m , int d , int k) {
 
@@ -52,8 +25,6 @@ knnresult kNN(double * X , double * Y , int n , int m , int d , int k) {
   result.nidx = NULL;
   result.ndist = NULL;
 
-  distIdx p;
-
   //X: n * d
   //Y: m * d
   double * distance;
@@ -62,9 +33,9 @@ knnresult kNN(double * X , double * Y , int n , int m , int d , int k) {
   int lda=d, ldb=d, ldc=m, i, j;
   int counter = 0;
 
-  distance = (double *) malloc((n*m)*sizeof(double));
+  distance = (double *) calloc(n*m,sizeof(double));
 
-  indeces= (int*)malloc(m * n  *sizeof(int));
+  indeces= (int*)malloc(n*m*sizeof(int));
 
   for(int i=0; i<m; i++){
     for(int j=0; j<n; j++) {
@@ -75,28 +46,37 @@ knnresult kNN(double * X , double * Y , int n , int m , int d , int k) {
   cblas_dgemm(CblasRowMajor , CblasNoTrans , CblasTrans , n, m , d , alpha , X , lda , Y , ldb , beta, distance , ldc);
 
 
-  double * xRow = (double *) calloc(n,sizeof(double));
-  double * yRow = (double *) calloc(m,sizeof(double));
+  // double * xRow = (double *) calloc(n,sizeof(double));
+  // double * yRow = (double *) calloc(m,sizeof(double));
+  //
+  // for(int i=0; i<n; i++){
+  //   for(int j=0; j<d; j++){
+  //     xRow[i] += (*(X+i*d+j)) * (*(X+i*d+j));
+  //   }
+  // }
+  // for(int i=0; i<m; i++){
+  //   for(int j=0; j<d; j++){
+  //     yRow[i] += (*(Y+i*d+j)) * (*(Y+i*d+j));
+  //   }
+  // }
 
   for(int i=0; i<n; i++){
-    for(int j=0; j<d; j++){
-      xRow[i] += (*(X+i*d+j)) * (*(X+i*d+j));
-    }
-  }
-  for(int i=0; i<m; i++){
-    for(int j=0; j<d; j++){
-      yRow[i] += (*(Y+i*d+j)) * (*(Y+i*d+j));
-    }
-  }
-
-  for(int i=0; i<n; i++){
+    double SumX =  SumRow(X, d, i);
     for(int j=0; j<m; j++){
-      *(distance + i*m + j) += xRow[i] + yRow[j];
-      *(distance + i*m + j) = sqrt( *(distance + i*m + j) );
+      double SumY = SumRow(Y,d,j);
+      *(distance + i*m + j ) += SumX + SumY;
+
+      if(*(distance + i*m + j ) < 0.00000001){
+        *(distance + i*m + j ) = 0;
+      }
+      else{
+        *(distance + i*m + j ) = sqrt( *(distance + i*m + j ) );
+      }
     }
   }
-  //free(xRow);
-  //free(yRow);
+  // free(xRow);
+  // free(yRow);
+
 
   // calculate transpose matrix
   double * transD = (double *) malloc(m*n*sizeof(double));
@@ -106,11 +86,11 @@ knnresult kNN(double * X , double * Y , int n , int m , int d , int k) {
     }
   }
 
-  // distance = transD then delete transD
+  //distance = transD then delete transD
   for(int i=0; i<n*m; i++) {
     *(distance+i) = *(transD+i);
   }
-  //free(transD);
+  free(transD);
   double * final = (double *) malloc(m*k * sizeof(double));
   int * finalIdx = (int *) malloc (m * k * sizeof(int));
   double * temp = (double *) malloc(n * sizeof(double));
@@ -120,93 +100,18 @@ knnresult kNN(double * X , double * Y , int n , int m , int d , int k) {
       *(temp+j) = *(distance+i*n+j);
       *(tempIdx+j)= *(indeces+i*n+j);
     }
+    qselect(temp,tempIdx,n,k);
+    quicksort(temp, tempIdx,0,k);
     for(int j=0; j<k; j++){
-      p = qselect(temp,tempIdx,n,j);
-      *(final+i*k+j) = p.distance;
-      *(finalIdx+i*k+j) = p.index;
+      *(final+i*k+j) = temp[j];
+      *(finalIdx+i*k+j) = tempIdx[j];
     }
   }
 
-  //
-  // double * transD1 = (double *) malloc(m*k*sizeof(double));
-  // int * transD2 = (int *) malloc(m*k*sizeof(int));
-  // for(int i=0; i<m; i++){
-  //   for(int j=0; j<k; j++){
-  //     *(transD1 + j*m + i ) = *(final + i*k + j );
-  //     *(transD2 + j*m + i ) = *(finalIdx + i*k + j );
-  //   }
-  // }
+
 
   result.ndist = final;
   result.nidx = finalIdx;
 
   return result;
 }
-
-
-// int main (int argc , char *argv[]) {
-//
-//   int n=3,m=2,k=2,d=2,i,j;
-//   int counter=0;
-//   knnresult ofi;
-//
-//   double * A = (double *) malloc(n*d*sizeof(double));
-//   double * B = (double *) malloc(m*d*sizeof(double));
-//   double * C = (double *) malloc(m*n*sizeof(double));
-//
-//   for(i=0; i<n; i++){
-//     for(j=0; j<d; j++){
-//       *(A+i*d+j) = (double)(rand()%10);
-//     }
-//   }
-//
-//   counter=0;
-//
-//   for(i=0; i<m; i++){
-//     for(j=0; j<d; j++){
-//       *(B+i*d+j) = (double)(rand()%10);
-//     }
-//   }
-//   ofi = kNN(A , B ,  n ,  d , k ,  m);
-//
-//   printf ("\n Matrix A: \n");
-//   for (i=0; i<n; i++) {
-//     for (j=0; j<d; j++) {
-//       printf ("%10.2lf", *(A+j+i*d));
-//     }
-//     printf ("\n");
-//   }
-//
-//   printf ("\n Matrix B: \n");
-//   for (i=0; i<m; i++) {
-//     for (j=0; j<d; j++) {
-//       printf ("%10.2lf", *(B+i*d+j));
-//     }
-//     printf ("\n");
-//   }
-//   //
-//   // printf("\n\n");
-//   printf ("\n Matrix DISTANCE: \n");
-//   for (i=0; i<m; i++) {
-//     for (j=0; j<k; j++) {
-//       printf ("%10.2lf", *(ofi.ndist+j+i*k));
-//     }
-//     printf ("\n");
-//   }
-//
-//   printf ("\n Matrix INDECES: \n");
-//   for (i=0; i<m; i++) {
-//     for (j=0; j<k; j++) {
-//       printf ("%10.2d", *(ofi.nidx+j+i*k));
-//     }
-//     printf ("\n");
-//   }
-//
-//   printf("\n\n");
-//
-//   free(A);
-//   free(B);
-//   free(C);
-//
-//   return 0;
-// }
