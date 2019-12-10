@@ -32,8 +32,7 @@ knnresult kNN(double * X , double * Y , int n , int m , int d , int k) {
   double * distance;
   int *indeces;
   double alpha=-2.0, beta=0.0;
-  int lda=d, ldb=d, ldc=m, i, j;
-  int counter = 0;
+  int lda=d, ldb=d, ldc=m;
 
   distance = (double *) malloc( n * m *sizeof(double));
   indeces= (int*)malloc(m * n  *sizeof(int));
@@ -50,23 +49,13 @@ knnresult kNN(double * X , double * Y , int n , int m , int d , int k) {
 
   cblas_dgemm(CblasRowMajor , CblasNoTrans , CblasTrans , n, m , d , alpha , X , lda , Y , ldb , beta, distance , ldc);
 
-  double * xRow = (double *) calloc(n,sizeof(double));
-  double * yRow = (double *) calloc(m,sizeof(double));
   double * transD = (double *)calloc(m*n,sizeof(double));
 
   for(int i=0; i<n; i++){
-    for(int j=0; j<d; j++){
-      xRow[i] += (*(X+i*d+j)) * (*(X+i*d+j));
-    }
-  }
-  for(int i=0; i<m; i++){
-    for(int j=0; j<d; j++){
-      yRow[i] += (*(Y+i*d+j)) * (*(Y+i*d+j));
-    }
-  }
-  for(int i=0; i<n; i++){
+    double SumX =  SumRow(X, d, i);
     for(int j=0; j<m; j++){
-      *(distance + i*m + j) += xRow[i] + yRow[j];
+      double SumY = SumRow(Y,d,j);
+      *(distance + i*m + j ) += SumX + SumY;
       if(*(distance + i*m + j) < 0.00000001){
         *(distance + i*m + j) = 0;
       }
@@ -75,8 +64,7 @@ knnresult kNN(double * X , double * Y , int n , int m , int d , int k) {
       }
     }
   }
-  free(xRow);
-  free(yRow);
+
   // calculate transpose matrix
   if(transD==NULL){
     exit(1);
@@ -130,22 +118,21 @@ knnresult distrAllkNN(double * X , int n , int d , int k ) {
   MPI_Comm_size(MPI_COMM_WORLD,&numtasks);
   MPI_Comm_rank(MPI_COMM_WORLD,&pid);
 
-  int *idx =(int *)malloc(n*k*sizeof(int));
-  double * dist = (double *) malloc(n * k * sizeof(double));
+  // int *idx =(int *)malloc(n*k*sizeof(int));
+  // double * dist = (double *) malloc(n * k * sizeof(double));
 
-  knnresult result ;
-  knnresult newResult  ;
+  knnresult result;
+  knnresult newResult;
 
   result.m=n;
   result.k=k;
-  idx = result.nidx;
-  dist = result.ndist;
+  // idx = result.nidx;
+  // dist = result.ndist;
 
   double *buffer = (double *) malloc(n * d * sizeof(double));
   double *myElements = (double *) malloc(n * d * sizeof(double));
   double *otherElements = (double *) malloc(n * d * sizeof(double));
-  double *y = (double *)malloc(n*k*sizeof(double));
-  int *yidx = (int *)malloc(n*k*sizeof(int));
+
   myElements = X;
   int counter= 2;
   int normaliseVar , newNormaliseVar ;
@@ -237,8 +224,6 @@ knnresult distrAllkNN(double * X , int n , int d , int k ) {
       min = result.ndist[i];
     }
   }
-
-
 
   double globalMin;
   double globalMax;

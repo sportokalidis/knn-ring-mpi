@@ -222,9 +222,9 @@ int validateResultRowMajor( knnresult knnres,
 int main()
 {
 
-  int n=891;                    // corpus
+  int n=892;                    // corpus
   int m=762;                    // query
-  int d=7;                      // dimensions
+  int d=30;                      // dimensions
   int k=13;                     // # neighbors
   int i,j;
 

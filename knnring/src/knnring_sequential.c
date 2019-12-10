@@ -32,9 +32,7 @@ knnresult kNN(double * X , double * Y , int n , int m , int d , int k) {
 
   //parametres used for CBlas_dgemm function
   double alpha=-2.0, beta=0.0;
-  int lda=d, ldb=d, ldc=m, i, j;
-
-  int counter = 0;
+  int lda=d, ldb=d, ldc=m;
 
   distance = (double *) calloc(n*m,sizeof(double));
 
